@@ -99,7 +99,6 @@ def reset_password_view(request, token):
             user.password = make_password(new_password)
             user.save()
             del reset_tokens[token]
-            messages.success(request, "Password successfully reset! Please log in.")
             return redirect('login')
 
     return render(request, 'accounts/reset_password.html', {'token': token})
