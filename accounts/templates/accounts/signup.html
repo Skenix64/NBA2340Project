@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - NBA App{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; height: calc(100svh - 90px); background-color: #f3f3f3;">
+    <div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); width: 100%; max-width: 400px;">
+        <h2 style="text-align: center; margin-bottom: 1rem;">Sign Up</h2>
+
+        <!-- Show form errors -->
+        {% if template_data.form.errors %}
+            <ul style="color: red; margin-bottom: 1rem;">
+                {% for field in template_data.form %}
+                    {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            {% for field in template_data.form %}
+                <div style="margin-bottom: 1rem;">
+                    <label>{{ field.label }}:</label>
+                    {{ field }}
+                </div>
+            {% endfor %}
+            <div style="text-align: center;">
+                <button type="submit" style="padding: 0.5rem 1rem; font-weight: bold;">Sign Up</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
