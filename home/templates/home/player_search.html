@@ -43,6 +43,23 @@
         Search
       </button>
     </form>
+  {% if query %}
+  <div style="text-align: center; margin-top: 40px;">
+    <h3>Results for "{{ query }}":</h3>
+    <ul style="list-style: none; padding: 0;">
+      {% for player in players %}
+        <li style="margin-bottom: 15px;">
+          <strong>{{ player.full_name }}</strong><br>
+          Player ID: {{ player.id }}<br>
+          Status: {% if player.is_active %}Active{% else %}Retired{% endif %}
+        </li>
+      {% empty %}
+        <li>No players found.</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
   </div>
 
   {% if query %}
@@ -50,7 +67,12 @@
       <h3>Results for "{{ query }}":</h3>
       <ul style="list-style: none; padding: 0;">
         {% for player in players %}
-          <li>{{ player.name }} - {{ player.team.name }}</li>
+          <li>
+            <strong>{{ player.full_name }}</strong><br>
+            Player ID: {{ player.id }}<br>
+            Active: {{ player.is_active }}
+          </li>
+          <br>
         {% empty %}
           <li>No players found.</li>
         {% endfor %}
