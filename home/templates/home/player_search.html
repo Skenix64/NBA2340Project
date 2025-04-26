@@ -12,10 +12,13 @@
         <ul>
             {% for player in players %}
                 <li>
-                    <a href="{% url 'player_detail' player.id %}">{{ player.full_name }}</a>
-                    (ID: {{ player.id }}) – {% if player.is_active %}Active{% else %}Retired{% endif %}
+                    <a href="{% url 'player_detail' player.id %}">
+                        {{ player.first_name }} {{ player.last_name }}
+                    </a>
+                    – ID: {{ player.id }} – Position: {{ player.position }}
                 </li>
             {% endfor %}
+
         </ul>
     {% elif query %}
         <p>No players found.</p>

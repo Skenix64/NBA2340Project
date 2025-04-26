@@ -11,6 +11,35 @@ from django.shortcuts import render
 from nba_api.stats.static import players as nba_players
 
 
+# def player_search_view(request):
+#     query = request.GET.get('q', '')
+#     matched_players = []
+#
+#     if query:
+#         all_players = nba_players.get_players()
+#         query_lower = query.lower()
+#
+#         # Filter and reformat to dicts Django can use in template
+#         for p in all_players:
+#             if query_lower in p['full_name'].lower():
+#                 matched_players.append({
+#                     'id': p['id'],
+#                     'full_name': p['full_name'],
+#                     'is_active': p['is_active']
+#                 })
+#
+#         # Debug print (optional)
+#         print("Matched players:", matched_players)
+#
+#     context = {
+#         'query': query,
+#         'players': matched_players
+#     }
+#     return render(request, 'home/player_search.html', context)
+
+from NBA.services.entity_factory import NBAEntityFactory
+from nba_api.stats.static import players as nba_players
+
 def player_search_view(request):
     query = request.GET.get('q', '')
     matched_players = []
@@ -19,17 +48,16 @@ def player_search_view(request):
         all_players = nba_players.get_players()
         query_lower = query.lower()
 
-        # Filter and reformat to dicts Django can use in template
         for p in all_players:
             if query_lower in p['full_name'].lower():
-                matched_players.append({
+                player_dict = {
                     'id': p['id'],
-                    'full_name': p['full_name'],
-                    'is_active': p['is_active']
-                })
-
-        # Debug print (optional)
-        print("Matched players:", matched_players)
+                    'first_name': p['first_name'],
+                    'last_name': p['last_name'],
+                    'position': p.get('position', 'Unknown')
+                }
+                entity = NBAEntityFactory.create_entity(player_dict, 'player')
+                matched_players.append(entity)
 
     context = {
         'query': query,
@@ -38,15 +66,44 @@ def player_search_view(request):
     return render(request, 'home/player_search.html', context)
 
 
+
+# def team_search_view(request):
+#     query = request.GET.get('q', '')
+#     teams = Team.objects.filter(name__icontains=query) if query else []
+#
+#     context = {
+#         'query': query,
+#         'teams': teams,
+#     }
+#     return render(request, 'home/team_search.html', context)
+from nba_api.stats.static import teams as nba_teams
+
 def team_search_view(request):
     query = request.GET.get('q', '')
-    teams = Team.objects.filter(name__icontains=query) if query else []
+    matched_teams = []
+
+    if query:
+        all_teams = nba_teams.get_teams()
+        query_lower = query.lower()
+
+        for t in all_teams:
+            if query_lower in t['full_name'].lower():
+                team_dict = {
+                    'id': t['id'],
+                    'full_name': t['full_name'],
+                    'city': t.get('city', 'Unknown')
+                }
+                entity = NBAEntityFactory.create_entity(team_dict, 'team')
+                matched_teams.append(entity)
 
     context = {
         'query': query,
-        'teams': teams,
+        'teams': matched_teams
     }
     return render(request, 'home/team_search.html', context)
+
+
+
 
 
 from django.shortcuts import render
@@ -105,3 +162,35 @@ def factory_demo_view(request):
 
 
 
+from django.shortcuts import render
+from nba_api.stats.endpoints import teamyearbyyearstats
+
+from NBA.services.entity_factory import NBAEntityFactory
+from nba_api.stats.static import teams
+from nba_api.stats.endpoints import teamyearbyyearstats
+
+def team_detail_view(request, team_id):
+    try:
+        # Get full team list and filter by ID
+        all_teams = teams.get_teams()
+        team_data = next((t for t in all_teams if t['id'] == team_id), None)
+
+        if team_data is None:
+            raise ValueError("Team not found")
+
+        # Use factory to create a Team object
+        team_obj = NBAEntityFactory.create_entity(team_data, 'team')
+
+        # Get year-by-year stats
+        stats = teamyearbyyearstats.TeamYearByYearStats(team_id=str(team_id)).get_data_frames()[0].to_dict('records')
+
+    except Exception as e:
+        print("Error:", e)
+        stats = []
+        team_obj = None
+
+    context = {
+        'team': team_obj,
+        'stats': stats
+    }
+    return render(request, 'home/team_detail.html', context)

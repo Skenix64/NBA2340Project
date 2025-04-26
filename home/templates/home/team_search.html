@@ -46,15 +46,16 @@
   </div>
 
   {% if query %}
-    <div style="text-align: center; margin-top: 40px;">
-      <h3>Results for "{{ query }}":</h3>
-      <ul style="list-style: none; padding: 0;">
-        {% for team in teams %}
-          <li>{{ team.name }}</li>
-        {% empty %}
-          <li>No teams found.</li>
-        {% endfor %}
-      </ul>
-    </div>
+      <div style="text-align: center; margin-top: 40px;">
+          <h3>Results for "{{ query }}":</h3>
+          <ul style="list-style: none; padding: 0;">
+              {% for team in teams %}
+                  <li>
+                      <a href="{% url 'team_detail' team.id %}">{{ team.name }}</a>
+                  </li>
+              {% endfor %}
+
+          </ul>
+      </div>
   {% endif %}
 {% endblock %}
