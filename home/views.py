@@ -73,16 +73,11 @@ def player_search_view(request):
 
 
 
-# def team_search_view(request):
-#     query = request.GET.get('q', '')
-#     teams = Team.objects.filter(name__icontains=query) if query else []
-#
-#     context = {
-#         'query': query,
-#         'teams': teams,
-#     }
-#     return render(request, 'home/team_search.html', context)
 from nba_api.stats.static import teams as nba_teams
+
+from nba_api.stats.static import teams as nba_teams
+from .models import Favorite
+from NBA.services.entity_factory import NBAEntityFactory
 
 def team_search_view(request):
     query = request.GET.get('q', '')
@@ -102,11 +97,18 @@ def team_search_view(request):
                 entity = NBAEntityFactory.create_entity(team_dict, 'team')
                 matched_teams.append(entity)
 
+    # Favorite logic
+    favorites = set()
+    if request.user.is_authenticated:
+        favorites = set(Favorite.objects.filter(user=request.user, entity_type='team').values_list('entity_id', flat=True))
+
     context = {
         'query': query,
-        'teams': matched_teams
+        'teams': matched_teams,
+        'favorites': favorites
     }
     return render(request, 'home/team_search.html', context)
+
 
 
 

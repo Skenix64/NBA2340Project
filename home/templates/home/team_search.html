@@ -50,11 +50,38 @@
           <h3>Results for "{{ query }}":</h3>
           <ul style="list-style: none; padding: 0;">
               {% for team in teams %}
-                  <li>
-                      <a href="{% url 'team_detail' team.id %}">{{ team.name }}</a>
+                  <li style="margin-bottom: 20px;">
+                      <a href="{% url 'team_detail' team.id %}" style="font-size: 20px;">
+                        {{ team.name }}
+                      </a>
+
+                      {% if user.is_authenticated %}
+                          {% with team.id|stringformat:"s" as team_id_str %}
+                              {% if team_id_str in favorites %}
+                                  <!-- Already favorited -->
+                                  <form method="post" action="{% url 'remove_favorite' %}" style="display:inline;">
+                                      {% csrf_token %}
+                                      <input type="hidden" name="entity_id" value="{{ team.id }}">
+                                      <input type="hidden" name="entity_type" value="team">
+                                      <button type="submit" style="color: red; background: none; border: none; cursor: pointer;">
+                                        ⭐ Unfavorite
+                                      </button>
+                                  </form>
+                              {% else %}
+                                  <!-- Not yet favorited -->
+                                  <form method="post" action="{% url 'add_favorite' %}" style="display:inline;">
+                                      {% csrf_token %}
+                                      <input type="hidden" name="entity_id" value="{{ team.id }}">
+                                      <input type="hidden" name="entity_type" value="team">
+                                      <button type="submit" style="background: none; border: none; cursor: pointer;">
+                                        ⭐ Favorite
+                                      </button>
+                                  </form>
+                              {% endif %}
+                          {% endwith %}
+                      {% endif %}
                   </li>
               {% endfor %}
-
           </ul>
       </div>
   {% endif %}
