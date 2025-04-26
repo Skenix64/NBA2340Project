@@ -1,82 +1,23 @@
 {% extends "home/base.html" %}
-
 {% block content %}
-  <div style="
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 80vh;
-    text-align: center;
-  ">
-    <h2 style="font-size: 32px; margin-bottom: 20px;">Search NBA Players</h2>
+    <h2>Search NBA Players</h2>
 
-    <form method="get" action="{% url 'player_search' %}" style="width: 100%; max-width: 500px;">
-      <input
-        type="text"
-        name="q"
-        placeholder="Search for a player..."
-        value="{{ query }}"
-        style="
-          width: 100%;
-          padding: 15px 20px;
-          font-size: 18px;
-          border: 2px solid #ccc;
-          border-radius: 8px;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-          color: #333;
-        "
-      >
-      <button
-        type="submit"
-        style="
-          margin-top: 15px;
-          padding: 10px 20px;
-          font-size: 16px;
-          background-color: black;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-        "
-      >
-        Search
-      </button>
+    <form method="get" action="{% url 'player_search' %}">
+        <input type="text" name="q" placeholder="Search" value="{{ query }}">
+        <button type="submit">Search</button>
     </form>
-  {% if query %}
-  <div style="text-align: center; margin-top: 40px;">
-    <h3>Results for "{{ query }}":</h3>
-    <ul style="list-style: none; padding: 0;">
-      {% for player in players %}
-        <li style="margin-bottom: 15px;">
-          <strong>{{ player.full_name }}</strong><br>
-          Player ID: {{ player.id }}<br>
-          Status: {% if player.is_active %}Active{% else %}Retired{% endif %}
-        </li>
-      {% empty %}
-        <li>No players found.</li>
-      {% endfor %}
-    </ul>
-  </div>
-{% endif %}
 
-  </div>
-
-  {% if query %}
-    <div style="text-align: center; margin-top: 40px;">
-      <h3>Results for "{{ query }}":</h3>
-      <ul style="list-style: none; padding: 0;">
-        {% for player in players %}
-          <li>
-            <strong>{{ player.full_name }}</strong><br>
-            Player ID: {{ player.id }}<br>
-            Active: {{ player.is_active }}
-          </li>
-          <br>
-        {% empty %}
-          <li>No players found.</li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
+    {% if players %}
+        <h3>Results for "{{ query }}":</h3>
+        <ul>
+            {% for player in players %}
+                <li>
+                    <a href="{% url 'player_detail' player.id %}">{{ player.full_name }}</a>
+                    (ID: {{ player.id }}) – {% if player.is_active %}Active{% else %}Retired{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% elif query %}
+        <p>No players found.</p>
+    {% endif %}
 {% endblock %}
