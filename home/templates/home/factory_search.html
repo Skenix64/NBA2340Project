@@ -1,0 +1,9 @@
+{% extends "home/base.html" %}
+{% block content %}
+  <h2>Factory Pattern Search for "{{ query }}"</h2>
+
+  {% for e in entities %}
+    <p>{{ e }}</p>  {# This uses your __str__ method for display #}
+  {% endfor %}
+
+{% endblock %}

@@ -69,4 +69,39 @@ def player_detail_view(request, player_id):
 
 
 
+from nba_api.stats.static import players, teams
+from NBA.services.entity_factory import NBAEntityFactory
+
+def factory_demo_view(request):
+    query = request.GET.get('q', '')
+    entities = []
+
+    if query:
+        player_data = players.get_players()
+        team_data = teams.get_teams()
+
+        for p in player_data:
+            if query.lower() in p['full_name'].lower():
+                player_dict = {
+                    'id': p['id'],
+                    'first_name': p['first_name'],
+                    'last_name': p['last_name'],
+                    'position': p.get('position', 'Unknown')
+                }
+                entity = NBAEntityFactory.create_entity(player_dict, 'player')
+                entities.append(entity)
+
+        for t in team_data:
+            if query.lower() in t['full_name'].lower():
+                team_dict = {
+                    'id': t['id'],
+                    'full_name': t['full_name'],
+                    'city': t.get('city', 'Unknown')
+                }
+                entity = NBAEntityFactory.create_entity(team_dict, 'team')
+                entities.append(entity)
+
+    return render(request, 'home/factory_search.html', {'entities': entities, 'query': query})
+
+
 
