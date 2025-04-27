@@ -58,25 +58,26 @@ def player_search_view(request):
                 }
                 entity = NBAEntityFactory.create_entity(player_dict, 'player')
                 matched_players.append(entity)
+    favorites = set()
+    if request.user.is_authenticated:
+        favorites = set(
+            Favorite.objects.filter(user=request.user, entity_type='player').values_list('entity_id', flat=True))
 
     context = {
         'query': query,
-        'players': matched_players
+        'players': matched_players,
+        'favorites': favorites
+
     }
     return render(request, 'home/player_search.html', context)
 
 
 
-# def team_search_view(request):
-#     query = request.GET.get('q', '')
-#     teams = Team.objects.filter(name__icontains=query) if query else []
-#
-#     context = {
-#         'query': query,
-#         'teams': teams,
-#     }
-#     return render(request, 'home/team_search.html', context)
 from nba_api.stats.static import teams as nba_teams
+
+from nba_api.stats.static import teams as nba_teams
+from .models import Favorite
+from NBA.services.entity_factory import NBAEntityFactory
 
 def team_search_view(request):
     query = request.GET.get('q', '')
@@ -96,11 +97,18 @@ def team_search_view(request):
                 entity = NBAEntityFactory.create_entity(team_dict, 'team')
                 matched_teams.append(entity)
 
+    # Favorite logic
+    favorites = set()
+    if request.user.is_authenticated:
+        favorites = set(Favorite.objects.filter(user=request.user, entity_type='team').values_list('entity_id', flat=True))
+
     context = {
         'query': query,
-        'teams': matched_teams
+        'teams': matched_teams,
+        'favorites': favorites
     }
     return render(request, 'home/team_search.html', context)
+
 
 
 
@@ -194,3 +202,73 @@ def team_detail_view(request, team_id):
         'stats': stats
     }
     return render(request, 'home/team_detail.html', context)
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from .models import Favorite  # make sure you import your Favorite model
+
+@login_required
+def add_favorite(request):
+    if request.method == 'POST':
+        entity_id = request.POST.get('entity_id')
+        entity_type = request.POST.get('entity_type')
+
+        Favorite.objects.get_or_create(
+            user=request.user,
+            entity_id=entity_id,
+            entity_type=entity_type
+        )
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+
+
+from NBA.services.entity_factory import NBAEntityFactory
+from nba_api.stats.static import players, teams
+
+@login_required
+def remove_favorite(request):
+    if request.method == 'POST':
+        entity_id = request.POST.get('entity_id')
+        entity_type = request.POST.get('entity_type')
+
+        Favorite.objects.filter(
+            user=request.user,
+            entity_id=entity_id,
+            entity_type=entity_type
+        ).delete()
+
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+
+
+def favorite_list_view(request):
+    favorites = Favorite.objects.filter(user=request.user)
+    player_data = players.get_players()
+    team_data = teams.get_teams()
+
+    entities = []
+
+    for fav in favorites:
+        if fav.entity_type == 'player':
+            data = next((p for p in player_data if p['id'] == int(fav.entity_id)), None)
+            if data:
+                entity = NBAEntityFactory.create_entity({
+                    'id': data['id'],
+                    'first_name': data['first_name'],
+                    'last_name': data['last_name'],
+                    'position': data.get('position', 'Unknown')
+                }, 'player')
+                entities.append(entity)
+
+        elif fav.entity_type == 'team':
+            data = next((t for t in team_data if t['id'] == int(fav.entity_id)), None)
+            if data:
+                entity = NBAEntityFactory.create_entity({
+                    'id': data['id'],
+                    'full_name': data['full_name'],
+                    'city': data.get('city', 'Unknown')
+                }, 'team')
+                entities.append(entity)
+
+    return render(request, 'home/favorite_list.html', {'entities': entities})

@@ -1,0 +1,14 @@
+{% extends "home/base.html" %}
+{% block content %}
+  <h2>My Favorites</h2>
+
+  {% for entity in entities %}
+    <div style="margin-bottom: 20px;">
+      {% if entity.__class__.__name__ == "Player" %}
+        <strong>Player:</strong> {{ entity.first_name }} {{ entity.last_name }} – Position: {{ entity.position }}
+      {% elif entity.__class__.__name__ == "Team" %}
+        <strong>Team:</strong> {{ entity.name }} – City: {{ entity.city }}
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endblock %}

@@ -10,14 +10,49 @@
     {% if players %}
         <h3>Results for "{{ query }}":</h3>
         <ul>
-            {% for player in players %}
-                <li>
-                    <a href="{% url 'player_detail' player.id %}">
-                        {{ player.first_name }} {{ player.last_name }}
-                    </a>
-                    – ID: {{ player.id }} – Position: {{ player.position }}
-                </li>
-            {% endfor %}
+{#            {% for player in players %}#}
+{#                <li>#}
+{#                    <a href="{% url 'player_detail' player.id %}">#}
+{#                        {{ player.first_name }} {{ player.last_name }}#}
+{#                    </a>#}
+{#                    – ID: {{ player.id }} – Position: {{ player.position }}#}
+{#                </li>#}
+{#            {% endfor %}#}
+{% for player in players %}
+  <li>
+    <a href="{% url 'player_detail' player.id %}">
+      {{ player.first_name }} {{ player.last_name }}
+    </a>
+
+    {% if user.is_authenticated %}
+
+        {% with player.id|stringformat:"s" as player_id_str %}
+  {% if player_id_str in favorites %}
+    <!-- Already favorited -->
+    <form method="post" action="{% url 'remove_favorite' %}" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="entity_id" value="{{ player.id }}">
+      <input type="hidden" name="entity_type" value="player">
+      <button type="submit" style="color: red;">⭐ Unfavorite</button>
+    </form>
+  {% else %}
+    <!-- Not yet favorited -->
+    <form method="post" action="{% url 'add_favorite' %}" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="entity_id" value="{{ player.id }}">
+      <input type="hidden" name="entity_type" value="player">
+      <button type="submit">⭐ Favorite</button>
+    </form>
+  {% endif %}
+{% endwith %}
+
+
+    {% endif %}
+  </li>
+{% endfor %}
+
+
+
 
         </ul>
     {% elif query %}
