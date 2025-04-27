@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}NBA App{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        nav {
+            background-color: black;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-logo img {
+            height: 75px;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            margin-left: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            margin: 0 10px;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 0;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .nav-auth {
+            margin-left: auto;
+        }
+
+        .nav-auth a {
+            color: yellow;
+            font-weight: bold;
+            margin-left: 10px;
+            text-decoration: none;
+        }
+
+        .nav-auth a:hover {
+            text-decoration: underline;
+        }
+
+        .hero-banner {
+            width: 100%;
+            height: calc(100svh - 90px);
+            background-image: url("{% static 'home/background.jpg' %}");
+            background-size: cover;
+            background-position: center 20%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f3f3f3;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .content {
+            padding: 0;
+            margin: 0;
+        }
+
+        @media (max-width: 600px) {
+            nav {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 0.5rem 1rem;
+            }
+
+            .nav-logo img {
+                height: 50px;
+            }
+
+            .nav-links {
+                flex-direction: column;
+                margin-left: 0;
+                width: 100%;
+                margin-top: 0.5rem;
+            }
+
+            .nav-links a {
+                margin: 4px 0;
+                font-size: 14px;
+            }
+
+            .nav-auth {
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav>
+        <div class="nav-logo">
+            <a href="/">
+                <img src="{% static 'home/nba_logo.png' %}" alt="NBA Logo">
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'homepage' %}">Home</a>
+            <a href="#">Schedule</a>
+            <a href="{% url 'team_search' %}">Teams</a>
+            <a href="{% url 'player_search' %}">Players</a>
+            <a href="#">Arena Locations</a>
+        </div>
+        <div class="nav-auth">
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}">Login</a>
+                <a href="{% url 'signup' %}">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>

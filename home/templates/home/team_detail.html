@@ -1,0 +1,33 @@
+{% extends "home/base.html" %}
+{% block content %}
+    <div style="padding: 40px; max-width: 900px; margin: auto;">
+        <h2>{{ team.name }} (ID: {{ team.id }}) – Year-by-Year Stats</h2>
+
+        {% if stats %}
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                <tr style="background-color: black; color: white;">
+                    <th>Season</th>
+                    <th>Team</th>
+                    <th>Wins</th>
+                    <th>Losses</th>
+                    <th>W/L %</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in stats %}
+                    <tr style="text-align: center;">
+                        <td>{{ row.YEAR|default:"N/A" }}</td>
+                        <td>{{ row.TEAM_NAME }}</td>
+                        <td>{{ row.WINS }}</td>
+                        <td>{{ row.LOSSES }}</td>
+                        <td>{{ row.WIN_PCT }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="text-align: center;">No stats available for this team.</p>
+        {% endif %}
+    </div>
+{% endblock %}

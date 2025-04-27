@@ -1,0 +1,35 @@
+{% extends "home/base.html" %}
+{% block content %}
+  <div style="padding: 40px; max-width: 900px; margin: auto;">
+    <h2 style="text-align: center;">Player ID: {{ player_id }} – Career Stats</h2>
+
+    {% if stats %}
+      <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: black; color: white;">
+            <th>Season</th>
+            <th>Team</th>
+            <th>GP</th>
+            <th>PTS</th>
+            <th>REB</th>
+            <th>AST</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in stats %}
+            <tr style="text-align: center;">
+              <td>{{ row.SEASON_ID }}</td>
+              <td>{{ row.TEAM_ABBREVIATION }}</td>
+              <td>{{ row.GP }}</td>
+              <td>{{ row.PTS }}</td>
+              <td>{{ row.REB }}</td>
+              <td>{{ row.AST }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p style="text-align: center;">No stats available for this player.</p>
+    {% endif %}
+  </div>
+{% endblock %}
