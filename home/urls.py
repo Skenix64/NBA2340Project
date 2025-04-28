@@ -9,7 +9,6 @@ urlpatterns = [
     path('teams/<int:team_id>/', views.team_detail_view, name='team_detail'),
     path('add_favorite/', views.add_favorite, name='add_favorite'),
     path('remove_favorite/', views.remove_favorite, name='remove_favorite'),
-
     path('favorites/', views.favorite_list_view, name='favorite_list'),
 
 ]

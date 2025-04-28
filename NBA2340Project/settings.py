@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'NBA.apps.NbaConfig',
     'home',
     'accounts',
+    'arenas',
+    'schedule',
 ]
 
 MIDDLEWARE = [

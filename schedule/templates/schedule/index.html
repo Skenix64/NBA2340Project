@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}NBA Schedule{% endblock %}
+
+{% block content %}
+<h1>NBA Schedule</h1>
+
+<!-- Search Bar -->
+<form method="get">
+    <input type="text" name="search" placeholder="Search past games (e.g., GSW, BOS)" value="{{ search_query }}">
+    <button type="submit">Search</button>
+</form>
+
+<!-- ✅ Search Results Section -->
+{% if search_query %}
+    <h2>Search Results for "{{ search_query }}"</h2>
+    {% if search_results %}
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Matchup</th>
+                    <th>Score</th>
+                    <th>Winner</th>
+                    <th>Location</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in search_results %}
+                <tr>
+                    <td>{{ game.formatted_date }}</td>
+                    <td>{{ game.matchup }}</td>
+                    <td>{{ game.score }}</td>
+                    <td><strong>{{ game.winner }}</strong></td>
+                    <td>{{ game.location }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No results found for "{{ search_query }}".</p>
+    {% endif %}
+{% endif %}
+
+<h2>Upcoming Games</h2>
+{% if upcoming_games %}
+<table class="schedule-table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Time</th>  <!-- ✅ Added Time Column -->
+            <th>Matchup</th>
+            <th>Location</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for game in upcoming_games %}
+        <tr>
+            <td>{{ game.date }}</td>
+            <td>
+                {% if game.time %}
+                    {{ game.time|time:"g:i A" }}  <!-- Format like 7:30 PM -->
+                {% else %}
+                    TBD
+                {% endif %}
+            </td>
+            <td>{{ game.away_team }} @ {{ game.home_team }}</td>
+            <td>{{ game.location }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No upcoming games scheduled.</p>
+{% endif %}
+
+<!-- 🟡 Today's Games -->
+<h2>Today's Games</h2>
+{% if todays_games %}
+<table class="schedule-table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Matchup</th>
+            <th>Score</th>
+            <th>Winner</th>
+            <th>Location</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for game in todays_games %}
+        <tr>
+            <td>{{ game.formatted_date }}</td>
+            <td>{{ game.matchup }}</td>
+            <td>{{ game.score }}</td>
+            <td><strong>{{ game.winner }}</strong></td>
+            <td>{{ game.location }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No games played so far today.</p>
+{% endif %}
+
+<!-- 🟠 Yesterday's Games -->
+<h2>Yesterday's Games</h2>
+{% if yesterdays_games %}
+<table class="schedule-table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Matchup</th>
+            <th>Score</th>
+            <th>Winner</th>
+            <th>Location</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for game in yesterdays_games %}
+        <tr>
+            <td>{{ game.formatted_date }}</td>
+            <td>{{ game.matchup }}</td>
+            <td>{{ game.score }}</td>
+            <td><strong>{{ game.winner }}</strong></td>
+            <td>{{ game.location }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No games were played yesterday.</p>
+{% endif %}
+
+<!-- 🟢 Styles -->
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto; /* ✅ Enable full-page scroll */
+        font-family: Arial, sans-serif;
+    }
+    h1, h2 {
+        margin-top: 20px;
+    }
+    form {
+        margin-bottom: 20px;
+    }
+    input[type="text"] {
+        padding: 5px;
+        width: 250px;
+    }
+    button {
+        padding: 5px 10px;
+    }
+    .schedule-table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+    }
+    th {
+        background-color: #f0f0f0;
+    }
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    tr:hover {
+        background-color: #e6f7ff;
+    }
+</style>
+{% endblock %}

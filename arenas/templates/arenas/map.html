@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NBA Arenas Map</title>
+    <style>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #000; /* Black theme */
+        color: white;
+    }
+
+    h1 {
+        text-align: center;
+        margin: 0;
+        padding: 1rem;
+        font-size: 28px;
+        background-color: #000;
+        color: white;
+        border-bottom: 2px solid #444;
+    }
+
+    #map {
+        height: 85vh;
+        width: 100%;
+    }
+
+    #map-controls {
+        position: absolute;
+        top: 130px;
+        left: 15px;
+        background: rgba(0, 0, 0, 0.85);
+        padding: 10px;
+        border-radius: 12px;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        z-index: 5;
+    }
+
+    #map-controls button {
+        background-color: #1a1a1a;
+        border: 1px solid #555;
+        color: white;
+        padding: 8px 12px;
+        margin: 5px 0;
+        width: 120px;
+        font-weight: bold;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+
+    #map-controls button:hover {
+        background-color: #333;
+        transform: scale(1.05);
+    }
+
+    .map-title {
+    background-color: #000;
+    color: white;
+    font-size: 28px;
+    padding: 1rem 2rem 1rem 3rem; /* extra left padding to center text visually */
+    margin: 0;
+    font-weight: bold;
+    position: relative;
+}
+
+.back-arrow {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 28px;
+    cursor: pointer;
+    user-select: none;
+    color: white;
+    transition: color 0.2s ease;
+}
+
+.back-arrow:hover {
+    color: #aaa;
+}
+    </style>
+</head>
+<body>
+    <h1 class="map-title">
+        <span class="back-arrow" onclick="history.back()">&#8592;</span>
+        NBA Arenas Map
+    </h1>
+
+    <div id="map-controls">
+        <button onclick="goToUser()">Your Location</button>
+        <button onclick="goToClosest()">Closest Arena</button>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBX0jGe5UnF64R4YoWzUYtTKFx_-guhgOE"></script>
+    <script>
+    let map;
+    let userLat, userLng;
+    let directionsRenderer;
+    let liveGames = [];
+
+    function fetchLiveGames() {
+        return fetch('https://api.balldontlie.io/v1/games?dates[]=today', {
+            headers: {
+                'Authorization': 'APIKEY'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            liveGames = data.data || [];
+        })
+        .catch(err => {
+            console.error("Failed to fetch live games:", err);
+            liveGames = [];
+        });
+    }
+
+    function findCurrentGameForArena(arenaName) {
+        for (const game of liveGames) {
+            if (game.home_team.full_name.includes(arenaName) || game.visitor_team.full_name.includes(arenaName)) {
+                return `${game.home_team.full_name} vs ${game.visitor_team.full_name}`;
+            }
+        }
+        return null;
+    }
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+        function toRad(x) { return x * Math.PI / 180; }
+        const R = 6371;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function goToUser() {
+        if (map && userLat && userLng && window.userInfoWindow && window.userMarker) {
+            map.setZoom(10);
+            map.panTo({ lat: userLat, lng: userLng });
+            window.userInfoWindow.open(map, window.userMarker);
+        }
+    }
+
+    function goToClosest() {
+        if (map && window.closestArena && window.closestMarker && window.closestInfoWindow) {
+            map.setZoom(10);
+            map.panTo({ lat: window.closestArena.latitude, lng: window.closestArena.longitude });
+            window.closestInfoWindow.open(map, window.closestMarker);
+        }
+    }
+
+    function clearDirections() {
+        if (directionsRenderer) {
+            directionsRenderer.setMap(null);
+            directionsRenderer = null;
+        }
+    }
+
+    function confirmDirections(destLat, destLng, arenaName) {
+        if (confirm(`Do you want directions to ${arenaName}?`)) {
+            clearDirections();
+            const directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+            directionsRenderer.setMap(map);
+            directionsService.route({
+                origin: { lat: userLat, lng: userLng },
+                destination: { lat: destLat, lng: destLng },
+                travelMode: 'DRIVING'
+            }, (response, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(response);
+                } else {
+                    alert("Directions request failed: " + status);
+                }
+            });
+        }
+    }
+
+    navigator.geolocation.getCurrentPosition(userPosition => {
+        userLat = userPosition.coords.latitude;
+        userLng = userPosition.coords.longitude;
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: userLat, lng: userLng },
+            zoom: 5,
+        });
+
+        const userMarker = new google.maps.Marker({
+            position: { lat: userLat, lng: userLng },
+            map: map,
+            title: 'Your Location',
+            icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'});
+
+        const userInfoWindow = new google.maps.InfoWindow({
+        content: `
+            <div style="font-family: 'Segoe UI', sans-serif; font-size: 14px; padding: 5px;">
+                <strong style="color: #333; font-size: 16px;">You are here</strong>
+            </div>
+        `});
+
+        userMarker.addListener('click', () => {
+            userInfoWindow.open(map, userMarker);
+        });
+
+        window.userMarker = userMarker;
+        window.userInfoWindow = userInfoWindow;
+
+        Promise.all([
+            fetch('/api/arenas/').then(res => res.json()),
+            fetchLiveGames()
+        ]).then(([arenas, games]) => {
+            let closestArena = null;
+            let minDistance = Infinity;
+
+            arenas.forEach(arena => {
+                const dist = getDistance(userLat, userLng, arena.latitude, arena.longitude);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestArena = arena;
+                }
+            });
+
+            arenas.forEach(arena => {
+                const isClosest = arena.name === closestArena.name;
+                const marker = new google.maps.Marker({
+                    position: { lat: arena.latitude, lng: arena.longitude },
+                    map: map,
+                    title: isClosest ? "Closest Arena" : arena.name,
+                    icon: isClosest
+                        ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+                        : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                });
+
+                const currentGame = findCurrentGameForArena(arena.name, games);
+                const gameInfo = currentGame
+                    ? `<div style='margin-top: 8px; color: #FFD700;'><strong>Now Playing:</strong><br>${currentGame}</div>`
+                    : `<div style='margin-top: 8px; color: #888;'>No game currently</div>`;
+
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                    <div style="min-width: 240px; font-family: 'Segoe UI', sans-serif; font-size: 14px; color: #222;">
+                        <div style="font-weight: bold; font-size: 16px;">${arena.name}</div>
+                        <div style="font-style: italic; color: #555;">${arena.team}</div>
+                        ${gameInfo}
+                        <div style="margin-top: 10px;">
+                            <button onclick="confirmDirections(${arena.latitude}, ${arena.longitude}, '${arena.name.replace(/'/g, "\\'")}')"
+                                style="background-color: #111; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                                Get Directions
+                            </button>
+                        </div>
+                    </div>
+                    `});
+
+                    marker.addListener('click', () => {
+                        clearDirections();
+                        infoWindow.open(map, marker);
+                    });
+
+                    infoWindow.addListener('closeclick', () => {
+                        clearDirections();
+                    });
+
+                    if (isClosest) {
+                        window.closestArena = arena;
+                        window.closestMarker = marker;
+                        window.closestInfoWindow = infoWindow;
+                    }
+                });
+
+                console.log("✅ Nearest arena:", closestArena.name, `(${minDistance.toFixed(2)} km away)`);
+            });
+        }, () => {
+        alert('Unable to retrieve your location. Please enable location access.');
+    });
+</script>
+
+</body>
+</html>
