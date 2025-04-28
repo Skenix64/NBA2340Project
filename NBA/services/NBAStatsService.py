@@ -1,8 +1,12 @@
+import os
+from dotenv import load_dotenv
 import requests
+
+load_dotenv()
 
 class NBAStatsService:
     API_BASE_URL = "https://api-nba-v1.p.rapidapi.com/"
-    API_KEY = "bd2c81e03cmsh8a8d7dffc4442a0p1b8612jsn20a02d70f095"
+    API_KEY = os.getenv('RAPIDAPI_KEY')
 
     HEADERS = {
         "X-RapidAPI-Key": API_KEY,
