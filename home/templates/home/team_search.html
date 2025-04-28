@@ -1,88 +1,186 @@
-{% extends "home/base.html" %}
+{% extends "base.html" %}
+
+{% block title %}Search NBA Teams{% endblock %}
 
 {% block content %}
-  <div style="
+<div class="search-container">
+    <h2>Search NBA Teams</h2>
+    <form method="get" action="{% url 'team_search' %}">
+        <input type="text" name="q" placeholder="Search for a team..." value="{{ query }}" required>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if query %}
+    <div class="search-results">
+        <h3>Results for "{{ query }}":</h3>
+        {% if teams %}
+        <div class="results-grid">
+            {% for team in teams %}
+            <div class="team-card">
+                <a href="{% url 'team_detail' team.id %}" class="team-link">{{ team.name }}</a>
+                {% if user.is_authenticated %}
+                    {% with team.id|stringformat:"s" as team_id_str %}
+                        {% if team_id_str in favorites %}
+                        <form method="post" action="{% url 'remove_favorite' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="entity_id" value="{{ team.id }}">
+                            <input type="hidden" name="entity_type" value="team">
+                            <button type="submit" class="fav-btn unfav">⭐ Unfavorite</button>
+                        </form>
+                        {% else %}
+                        <form method="post" action="{% url 'add_favorite' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="entity_id" value="{{ team.id }}">
+                            <input type="hidden" name="entity_type" value="team">
+                            <button type="submit" class="fav-btn">⭐ Favorite</button>
+                        </form>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <p style="color: red; margin-top: 20px;">No results found for "{{ query }}".</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Styling -->
+<style>
+/* Typography and layout */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f3f3f3;
+    color: #222;
+    margin: 0;
+    padding: 0;
+}
+
+.search-container {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.search-container h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+/* Search bar and button */
+form {
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 80vh;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+form input[type="text"] {
+    padding: 12px 20px;
+    font-size: 18px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    width: 300px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: border-color 0.3s ease;
+}
+
+form input[type="text"]:focus {
+    border-color: #555;
+    outline: none;
+}
+
+form button {
+    padding: 12px 25px;
+    font-size: 16px;
+    background-color: black;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+form button:hover {
+    background-color: #333;
+    transform: scale(1.05);
+}
+
+/* Results grid */
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Team cards */
+.team-card {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     text-align: center;
-  ">
-    <h2 style="font-size: 32px; margin-bottom: 20px;">Search NBA Teams</h2>
+    animation: fadeIn 0.8s ease-in-out;
+}
 
-    <form method="get" action="{% url 'team_search' %}" style="width: 100%; max-width: 500px;">
-      <input
-        type="text"
-        name="q"
-        placeholder="Search for a team..."
-        value="{{ query }}"
-        style="
-          width: 100%;
-          padding: 15px 20px;
-          font-size: 18px;
-          border: 2px solid #ccc;
-          border-radius: 8px;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-          color: #333;
-        "
-      >
-      <button
-        type="submit"
-        style="
-          margin-top: 15px;
-          padding: 10px 20px;
-          font-size: 16px;
-          background-color: black;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-        "
-      >
-        Search
-      </button>
-    </form>
-  </div>
+.team-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
 
-  {% if query %}
-      <div style="text-align: center; margin-top: 40px;">
-          <h3>Results for "{{ query }}":</h3>
-          <ul style="list-style: none; padding: 0;">
-              {% for team in teams %}
-                  <li style="margin-bottom: 20px;">
-                      <a href="{% url 'team_detail' team.id %}" style="font-size: 20px;">
-                        {{ team.name }}
-                      </a>
+/* Team name link */
+.team-link {
+    display: block;
+    font-size: 22px;
+    font-weight: bold;
+    color: black;
+    text-decoration: none;
+    margin-bottom: 15px;
+    transition: color 0.3s ease;
+}
 
-                      {% if user.is_authenticated %}
-                          {% with team.id|stringformat:"s" as team_id_str %}
-                              {% if team_id_str in favorites %}
-                                  <!-- Already favorited -->
-                                  <form method="post" action="{% url 'remove_favorite' %}" style="display:inline;">
-                                      {% csrf_token %}
-                                      <input type="hidden" name="entity_id" value="{{ team.id }}">
-                                      <input type="hidden" name="entity_type" value="team">
-                                      <button type="submit" style="color: red; background: none; border: none; cursor: pointer;">
-                                        ⭐ Unfavorite
-                                      </button>
-                                  </form>
-                              {% else %}
-                                  <!-- Not yet favorited -->
-                                  <form method="post" action="{% url 'add_favorite' %}" style="display:inline;">
-                                      {% csrf_token %}
-                                      <input type="hidden" name="entity_id" value="{{ team.id }}">
-                                      <input type="hidden" name="entity_type" value="team">
-                                      <button type="submit" style="background: none; border: none; cursor: pointer;">
-                                        ⭐ Favorite
-                                      </button>
-                                  </form>
-                              {% endif %}
-                          {% endwith %}
-                      {% endif %}
-                  </li>
-              {% endfor %}
-          </ul>
-      </div>
-  {% endif %}
+.team-link:hover {
+    color: #555;
+}
+
+/* Favorite buttons */
+.fav-btn {
+    background-color: gold;
+    color: black;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.fav-btn:hover {
+    background-color: #ffd700;
+    transform: scale(1.05);
+}
+
+.unfav {
+    background-color: red;
+    color: white;
+}
+
+.unfav:hover {
+    background-color: darkred;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
 {% endblock %}
+
