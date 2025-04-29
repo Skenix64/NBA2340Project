@@ -23,4 +23,5 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('schedule/', include('schedule.urls')),
     path('', include('arenas.urls')),
+    path('admin/', admin.site.urls),
 ]

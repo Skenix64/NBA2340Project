@@ -8,3 +8,16 @@ def arena_locations(request):
 
 def map_page(request):
     return render(request, 'arenas/map.html')
+
+def arena_list_api(request):
+    arenas = Arena.objects.all()
+    data = [
+        {
+            'name': arena.name,
+            'team': arena.team,
+            'latitude': arena.latitude,
+            'longitude': arena.longitude
+        }
+        for arena in arenas
+    ]
+    return JsonResponse(data, safe=False)
