@@ -5,13 +5,17 @@
     <meta charset="UTF-8">
     <title>{% block title %}NBA App{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Navbar */
         nav {
             background-color: black;
             padding: 1rem 2rem;
             display: flex;
             align-items: center;
             flex-wrap: wrap;
+            font-family: 'Poppins', sans-serif;
         }
 
         .nav-logo img {
@@ -30,6 +34,7 @@
             text-decoration: none;
             font-weight: bold;
             padding: 0.5rem 0;
+            font-family: 'Poppins', sans-serif;
         }
 
         .nav-links a:hover {
@@ -38,6 +43,7 @@
 
         .nav-auth {
             margin-left: auto;
+            font-family: 'Poppins', sans-serif;
         }
 
         .nav-auth a {
@@ -51,6 +57,7 @@
             text-decoration: underline;
         }
 
+        /* Hero banner */
         .hero-banner {
             width: 100%;
             height: calc(100svh - 90px);
@@ -59,20 +66,28 @@
             background-position: center 20%;
         }
 
+        /* Body styling */
         body {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-color: #f3f3f3;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden; /* always prevent sideways scroll */
         }
 
+        /* Disable vertical scrolling on home */
+        .no-scroll {
+            overflow-y: hidden;
+        }
+
+        /* Content wrapper */
         .content {
             padding: 0;
             margin: 0;
         }
 
+        /* Responsive navbar */
         @media (max-width: 600px) {
             nav {
                 flex-direction: column;
@@ -102,7 +117,7 @@
         }
     </style>
 </head>
-<body>
+<body class="{% if request.path == '/' %}no-scroll{% endif %}">
     <!-- Navbar -->
     <nav>
         <div class="nav-logo">
@@ -115,7 +130,7 @@
             <a href="{% url 'schedule' %}">Schedule</a>
             <a href="{% url 'team_search' %}">Teams</a>
             <a href="{% url 'player_search' %}">Players</a>
-            <a href="{% url 'map_page' %}" class="{% if request.path == '/map/' %}active{% endif %}">Arena Locations</a>
+            <a href="{% url 'map_page' %}">Arena Locations</a>
         </div>
         <div class="nav-auth">
             {% if user.is_authenticated %}
@@ -129,6 +144,10 @@
 
     <!-- Page Content -->
     <div class="content">
+        {% if request.path == '/' %}
+            <div class="hero-banner"></div>
+        {% endif %}
+
         {% block content %}
         {% endblock %}
     </div>
