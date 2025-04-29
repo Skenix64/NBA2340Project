@@ -2,6 +2,12 @@ from django.shortcuts import render
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playercareerstats
 
+from django.shortcuts import render
+from nba_api.stats.static import players as nba_players
+from NBA.models import Team, Player, TeamSeasonStats, PlayerSeasonStats
+from NBA.services.entity_factory import NBAEntityFactory
+from .models import Favorite
+
 
 def homepage(request):
     return render(request, 'home/index.html')
@@ -48,26 +54,33 @@ def player_search_view(request):
         all_players = nba_players.get_players()
         query_lower = query.lower()
 
+        # API players
         for p in all_players:
             if query_lower in p['full_name'].lower():
                 player_dict = {
                     'id': p['id'],
                     'first_name': p['first_name'],
                     'last_name': p['last_name'],
-                    'position': p.get('position', 'Unknown')
+                    'position': p.get('position', 'Unknown'),
                 }
                 entity = NBAEntityFactory.create_entity(player_dict, 'player')
                 matched_players.append(entity)
+
+        # Admin players
+        admin_players = Player.objects.filter(name__icontains=query)
+        for player in admin_players:
+            matched_players.append(player)
+
+    # Favorites
     favorites = set()
     if request.user.is_authenticated:
-        favorites = set(
-            Favorite.objects.filter(user=request.user, entity_type='player').values_list('entity_id', flat=True))
+        favorites = set(Favorite.objects.filter(user=request.user, entity_type='player')
+                        .values_list('entity_id', flat=True))
 
     context = {
         'query': query,
         'players': matched_players,
         'favorites': favorites
-
     }
     return render(request, 'home/player_search.html', context)
 
@@ -83,6 +96,7 @@ def team_search_view(request):
     query = request.GET.get('q', '')
     matched_teams = []
 
+    # API teams
     if query:
         all_teams = nba_teams.get_teams()
         query_lower = query.lower()
@@ -92,12 +106,19 @@ def team_search_view(request):
                 team_dict = {
                     'id': t['id'],
                     'full_name': t['full_name'],
-                    'city': t.get('city', 'Unknown')
+                    'city': t.get('city', 'Unknown'),
+                    'source': 'api'
                 }
                 entity = NBAEntityFactory.create_entity(team_dict, 'team')
                 matched_teams.append(entity)
 
-    # Favorite logic
+    # Admin teams
+    admin_teams = Team.objects.filter(name__icontains=query)
+    for team in admin_teams:
+        team.source = 'admin'
+        matched_teams.append(team)
+
+    # Favorites
     favorites = set()
     if request.user.is_authenticated:
         favorites = set(Favorite.objects.filter(user=request.user, entity_type='team').values_list('entity_id', flat=True))
@@ -118,17 +139,46 @@ from django.shortcuts import render
 from nba_api.stats.endpoints import playercareerstats
 
 def player_detail_view(request, player_id):
+    stats = []
+    player_obj = None
+
     try:
-        career = playercareerstats.PlayerCareerStats(player_id=int(player_id))
-        stats_df = career.get_data_frames()[0]
-        stats = stats_df.to_dict('records')
+        # Check for admin-entered player first
+        admin_player = Player.objects.filter(id=player_id).first()
+
+        if admin_player:
+            player_obj = admin_player
+            stats = PlayerSeasonStats.objects.filter(player=admin_player).order_by('season')
+            # Format to match the template expectations (like API output)
+            stats = [{
+                'SEASON_ID': s.season,
+                'TEAM_ABBREVIATION': s.player.team_name or 'N/A',
+                'GP': s.games_played,
+                'PTS': s.points,
+                'REB': s.rebounds,
+                'AST': s.assists
+            } for s in stats]
+
+        else:
+            # Fallback to API
+            all_players = nba_players.get_players()
+            player_data = next((p for p in all_players if p['id'] == int(player_id)), None)
+
+            if not player_data:
+                raise ValueError("Player not found")
+
+            player_obj = NBAEntityFactory.create_entity(player_data, 'player')
+            career = playercareerstats.PlayerCareerStats(player_id=int(player_id))
+            stats_df = career.get_data_frames()[0]
+            stats = stats_df.to_dict('records')
+
     except Exception as e:
-        print("Error fetching stats:", e)
-        stats = []
+        print("Error in player_detail_view:", e)
 
     context = {
         'player_id': player_id,
-        'stats': stats,
+        'player': player_obj,
+        'stats': stats
     }
     return render(request, 'home/player_detail.html', context)
 
@@ -178,24 +228,37 @@ from nba_api.stats.static import teams
 from nba_api.stats.endpoints import teamyearbyyearstats
 
 def team_detail_view(request, team_id):
+    stats = []
+    team_obj = None
+
     try:
-        # Get full team list and filter by ID
-        all_teams = teams.get_teams()
-        team_data = next((t for t in all_teams if t['id'] == team_id), None)
+        # Check if it's an admin-entered team
+        admin_team = Team.objects.filter(id=team_id).first()
 
-        if team_data is None:
-            raise ValueError("Team not found")
+        if admin_team:
+            team_obj = admin_team
+            # Get and format admin stats
+            stats = TeamSeasonStats.objects.filter(team=admin_team).order_by('season')
+            stats = [{
+                'YEAR': s.season,
+                'TEAM_NAME': admin_team.name,
+                'WINS': s.wins,
+                'LOSSES': s.losses,
+                'WIN_PCT': s.win_loss_pct
+            } for s in stats]
+        else:
+            # Otherwise, use API
+            all_teams = nba_teams.get_teams()
+            team_data = next((t for t in all_teams if t['id'] == int(team_id)), None)
 
-        # Use factory to create a Team object
-        team_obj = NBAEntityFactory.create_entity(team_data, 'team')
-
-        # Get year-by-year stats
-        stats = teamyearbyyearstats.TeamYearByYearStats(team_id=str(team_id)).get_data_frames()[0].to_dict('records')
+            if team_data:
+                team_obj = NBAEntityFactory.create_entity(team_data, 'team')
+                api_stats = teamyearbyyearstats.TeamYearByYearStats(team_id=str(team_id))
+                stats_df = api_stats.get_data_frames()[0]
+                stats = stats_df.to_dict('records')
 
     except Exception as e:
-        print("Error:", e)
-        stats = []
-        team_obj = None
+        print("Error loading team stats:", e)
 
     context = {
         'team': team_obj,

@@ -18,7 +18,11 @@
             {% for player in players %}
             <div class="player-card">
                 <a href="{% url 'player_detail' player.id %}" class="player-link">
-                    {{ player.first_name }} {{ player.last_name }}
+                    {% if player.first_name %}
+                        {{ player.first_name }} {{ player.last_name }}
+                    {% else %}
+                        {{ player.name }}
+                    {% endif %}
                 </a>
                 <p class="player-position">
                     {{ player.position|default:"Position Unknown" }}
@@ -54,7 +58,6 @@
 
 <!-- Styling -->
 <style>
-/* Full page must be scrollable */
 body {
     font-family: 'Poppins', sans-serif;
     background-color: #f3f3f3;
@@ -64,7 +67,6 @@ body {
     min-height: 100vh;
 }
 
-/* Search section */
 .search-container {
     text-align: center;
     margin-top: 40px;
@@ -116,7 +118,6 @@ form button:hover {
     transform: scale(1.05);
 }
 
-/* Results */
 .search-results h3 {
     font-size: 24px;
     margin-bottom: 20px;
@@ -131,7 +132,6 @@ form button:hover {
     padding-bottom: 50px;
 }
 
-/* Player card */
 .player-card {
     background-color: white;
     border: 1px solid #ddd;
@@ -148,7 +148,6 @@ form button:hover {
     box-shadow: 0 6px 12px rgba(0,0,0,0.1);
 }
 
-/* Player name link */
 .player-link {
     font-size: 22px;
     font-weight: bold;
@@ -163,14 +162,12 @@ form button:hover {
     color: #555;
 }
 
-/* Player position text */
 .player-position {
     font-size: 16px;
     color: #666;
     margin-bottom: 12px;
 }
 
-/* Favorite/Unfavorite button */
 .fav-btn {
     background-color: gold;
     color: black;
@@ -196,12 +193,12 @@ form button:hover {
     background-color: darkred;
 }
 
-/* Fade-in animation */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 </style>
 {% endblock %}
+
 
 

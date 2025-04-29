@@ -17,7 +17,13 @@
         <div class="results-grid">
             {% for team in teams %}
             <div class="team-card">
-                <a href="{% url 'team_detail' team.id %}" class="team-link">{{ team.name }}</a>
+                <a href="{% url 'team_detail' team.id %}" class="team-link">
+                    {% if team.name %}
+                        {{ team.name }}
+                    {% else %}
+                        {{ team.full_name }}
+                    {% endif %}
+                </a>
                 {% if user.is_authenticated %}
                     {% with team.id|stringformat:"s" as team_id_str %}
                         {% if team_id_str in favorites %}
@@ -49,7 +55,6 @@
 
 <!-- Styling -->
 <style>
-/* Typography and layout */
 body {
     font-family: 'Poppins', sans-serif;
     background-color: #f3f3f3;
@@ -68,7 +73,6 @@ body {
     margin-bottom: 20px;
 }
 
-/* Search bar and button */
 form {
     display: flex;
     justify-content: center;
@@ -108,7 +112,6 @@ form button:hover {
     transform: scale(1.05);
 }
 
-/* Results grid */
 .results-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -118,7 +121,6 @@ form button:hover {
     padding: 0 20px;
 }
 
-/* Team cards */
 .team-card {
     background-color: white;
     border: 1px solid #ddd;
@@ -135,7 +137,6 @@ form button:hover {
     box-shadow: 0 6px 12px rgba(0,0,0,0.1);
 }
 
-/* Team name link */
 .team-link {
     display: block;
     font-size: 22px;
@@ -150,7 +151,6 @@ form button:hover {
     color: #555;
 }
 
-/* Favorite buttons */
 .fav-btn {
     background-color: gold;
     color: black;
@@ -176,7 +176,6 @@ form button:hover {
     background-color: darkred;
 }
 
-/* Fade-in animation */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
